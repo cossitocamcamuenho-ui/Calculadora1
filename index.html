@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calculadora Avançada</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+
+  body {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: linear-gradient(135deg, #1e3c72, #2a5298, #6a11cb);
+    padding: 20px;
+  }
+
+  .calculadora {
+    background: rgba(20, 20, 30, 0.95);
+    border-radius: 20px;
+    padding: 25px;
+    width: 100%;
+    max-width: 420px;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+
+  .display {
+    background: #0d1117;
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 20px;
+    text-align: right;
+    min-height: 110px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    border: 1px solid #30363d;
+  }
+
+  .historico {
+    color: #8b949e;
+    font-size: 14px;
+    min-height: 20px;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+  }
+
+  .resultado {
+    color: #58a6ff;
+    font-size: 36px;
+    font-weight: 600;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    line-height: 1.1;
+  }
+
+  .botoes {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+  }
+
+  button {
+    background: #21262d;
+    color: #e6edf3;
+    border: 1px solid #30363d;
+    border-radius: 10px;
+    padding: 16px 0;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    user-select: none;
+  }
+
+  button:hover { background: #30363d; transform: translateY(-2px); }
+  button:active { transform: translateY(0); }
+
+  .op { color: #ffa657; }
+  .func { color: #79c0ff; font-size: 14px; }
+  .igual {
+    background: linear-gradient(135deg, #238636, #2ea043);
+    color: white;
+    grid-column: span 2;
+  }
+  .igual:hover { background: linear-gradient(135deg, #2ea043, #3fb950); }
+  .limpar { color: #ff7b72; }
+  .apagar { color: #ff7b72; }
+  .zero { grid-column: span 2; }
+
+  .modo {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 15px;
+    font-size: 12px;
+    color: #8b949e;
+  }
+  .modo button {
+    padding: 6px 12px;
+    font-size: 12px;
+    background: transparent;
+  }
+  .modo button.ativo {
+    background: #238636;
+    border-color: #2ea043;
+    color: white;
+  }
+</style>
+</head>
+<body>
+
+<div class="calculadora">
+  <div class="modo">
+    <span id="modoTexto">Modo: Graus (DEG)</span>
+    <button id="btnModo">Alternar DEG/RAD</button>
+  </div>
+
+  <div class="display">
+    <div class="historico" id="historico"></div>
+    <div class="resultado" id="resultado">0</div>
+  </div>
+
+  <div class="botoes">
+    <!-- Linha 1 -->
+    <button class="func" onclick="inserir('sin(')">sin</button>
+    <button class="func" onclick="inserir('cos(')">cos</button>
+    <button class="func" onclick="inserir('tan(')">tan</button>
+    <button class="func" onclick="inserir('log(')">log</button>
+    <button class="func" onclick="inserir('ln(')">ln</button>
+
+    <!-- Linha 2 -->
+    <button class="func" onclick="inserir('√(')">√</button>
+    <button class="func" onclick="inserir('^')">xʸ</button>
+    <button class="func" onclick="inserir('(')">(</button>
+    <button class="func" onclick="inserir(')')">)</button>
+    <button class="func" onclick="inserir('π')">π</button>
+
+    <!-- Linha 3 -->
+    <button class="limpar" onclick="limpar()">C</button>
+    <button class="apagar" onclick="apagar()">⌫</button>
+    <button class="op" onclick="inserir('%')">%</button>
+    <button class="op" onclick="inserir('/')">÷</button>
+    <button class="func" onclick="inserir('!')">n!</button>
+
+    <!-- Linha 4 -->
+    <button onclick="inserir('7')">7</button>
+    <button onclick="inserir('8')">8</button>
+    <button onclick="inserir('9')">9</button>
+    <button class="op" onclick="inserir('*')">×</button>
+    <button class="func" onclick="inserir('e')">e</button>
+
+    <!-- Linha 5 -->
+    <button onclick="inserir('4')">4</button>
+    <button onclick="inserir('5')">5</button>
+    <button onclick="inserir('6')">6</button>
+    <button class="op" onclick="inserir('-')">−</button>
+    <button class="func" onclick="inserir('1/')">1/x</button>
+
+    <!-- Linha 6 -->
+    <button onclick="inserir('1')">1</button>
+    <button onclick="inserir('2')">2</button>
+    <button onclick="inserir('3')">3</button>
+    <button class="op" onclick="inserir('+')">+</button>
+    <button class="func" onclick="inserir('abs(')">|x|</button>
+
+    <!-- Linha 7 -->
+    <button class="zero" onclick="inserir('0')">0</button>
+    <button onclick="inserir('.')">.</button>
+    <button class="igual" onclick="calcular()">=</button>
+  </div>
+</div>
+
+<script>
+  let expressao = "";
+  let ultimoResultado = "0";
+  let modoGraus = true;
+  const display = document.getElementById("resultado");
+  const historico = document.getElementById("historico");
+
+  // Atualiza o display
+  function atualizarDisplay() {
+    display.textContent = expressao || "0";
+  }
+
+  // Insere caracteres
+  function inserir(valor) {
+    expressao += valor;
+    atualizarDisplay();
+  }
+
+  // Limpa tudo
+  function limpar() {
+    expressao = "";
+    historico.textContent = "";
+    display.textContent = "0";
+  }
+
+  // Apaga último caractere
+  function apagar() {
+    expressao = expressao.slice(0, -1);
+    atualizarDisplay();
+  }
+
+  // Alterna entre graus e radianos
+  document.getElementById("btnModo").addEventListener("click", () => {
+    modoGraus = !modoGraus;
+    document.getElementById("modoTexto").textContent =
+      "Modo: " + (modoGraus ? "Graus (DEG)" : "Radianos (RAD)");
+  });
+
+  // Fatorial
+  function fatorial(n) {
+    if (n < 0) return NaN;
+    if (n === 0 || n === 1) return 1;
+    let r = 1;
+    for (let i = 2; i <= n; i++) r *= i;
+    return r;
+  }
+
+  // Converte graus para radianos se necessário
+  function toRad(x) {
+    return modoGraus ? (x * Math.PI) / 180 : x;
+  }
+
+  // Calcula o resultado final
+  function calcular() {
+    if (!expressao) return;
+
+    let expr = expressao;
+
+    // Substituições
+    expr = expr.replace(/π/g, "(" + Math.PI + ")");
+    expr = expr.replace(/(?<![a-z])e(?![a-z(])/g, "(" + Math.E + ")");
+    expr = expr.replace(/√/g, "Math.sqrt");
+    expr = expr.replace(/abs\(/g, "Math.abs(");
+    expr = expr.replace(/sin\(/g, "Math.sin(");
+    expr = expr.replace(/cos\(/g, "Math.cos(");
+    expr = expr.replace(/tan\(/g, "Math.tan(");
+    expr = expr.replace(/log\(/g, "Math.log10(");
+    expr = expr.replace(/ln\(/g, "Math.log(");
+    expr = expr.replace(/\^/g, "**");
+    expr = expr.replace(/%/g, "/100");
+
+    // Ajusta funções trigonométricas com graus
+    if (modoGraus) {
+      expr = expr.replace(/Math\.sin\(([^)]+)\)/g, "Math.sin(toRad($1))");
+      expr = expr.replace(/Math\.cos\(([^)]+)\)/g, "Math.cos(toRad($1))");
+      expr = expr.replace(/Math\.tan\(([^)]+)\)/g, "Math.tan(toRad($1))");
+    }
+
+    // Fatorial: substitui n! por fatorial(n)
+    expr = expr.replace(/(\d+(?:\.\d+)?)!/g, "fatorial($1)");
+
+    try {
+      let resultado = Function(
+        "toRad", "fatorial", "return (" + expr + ")"
+      )(toRad, fatorial);
+
+      if (typeof resultado === "number" && !isNaN(resultado) && isFinite(resultado)) {
+        historico.textContent = expressao + " =";
+        ultimoResultado = resultado;
+        resultado = parseFloat(resultado.toFixed(10));
+        display.textContent = resultado;
+        expressao = resultado.toString();
+      } else {
+        display.textContent = "Erro";
+        expressao = "";
+      }
+    } catch (e) {
+      display.textContent = "Erro";
+      expressao = "";
+    }
+  }
+
+  // Suporte ao teclado
+  document.addEventListener("keydown", (e) => {
+    const tecla = e.key;
+    if (/[0-9.+\-*/()%^]/.test(tecla)) {
+      inserir(tecla);
+    } else if (tecla === "Enter" || tecla === "=") {
+      e.preventDefault();
+      calcular();
+    } else if (tecla === "Backspace") {
+      apagar();
+    } else if (tecla === "Escape") {
+      limpar();
+    }
+  });
+</script>
+
+</body>
+</html>
